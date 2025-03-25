@@ -24,13 +24,13 @@ fn handle_connection(mut stream: TcpStream) {
     println!("Request: {:?}", http_request);
 
 
-    if(http_request.len() == 0) {
+    if http_request.len() == 0 {
         return;
     }
-    if(http_request[0].contains("favicon.ico")) {
+    if http_request[0].contains("favicon.ico") {
         return;
     }
-    if(http_request[0].contains("GET / HTTP/1.1")) {
+    if http_request[0].contains("GET / HTTP/1.1") {
         get_home_page(stream);
     } else {
         get_404_page(stream);
