@@ -45,12 +45,15 @@ impl ThreadPool{
 struct Worker {
     id: usize,
     thread: thread::JoinHandle<()>,
-    receiver: Arc<Mutex<mpsc::Receiver<Job>>>,
 }
 
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
-        let thread = thread::spawn(|| {});
-        Worker { id, thread, receiver }
+        let thread = thread::spawn(move || loop {
+            let job = receiver.lock().unwrap().recv().unwrap();
+            println!("Worker {} got a job; executing.", id);
+            job();
+        });
+        Worker { id, thread}
     }
 }
