@@ -7,7 +7,7 @@ type Job = Box<dyn FnOnce() + Send + 'static>;
 
 pub struct ThreadPool{
     workers: Vec<Worker>,
-    dispatcher: mpsc::Sender<Job>,
+    dispatcher: Option<mpsc::Sender<Job>>,
 }
 
 impl ThreadPool{
@@ -30,7 +30,7 @@ impl ThreadPool{
             // create some threads and store them in the vector
             workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
-        ThreadPool { workers, dispatcher }
+        ThreadPool { workers, dispatcher: Some(dispatcher) }
     }
     pub fn execute<F>(&self, f: F)
     where
@@ -38,12 +38,14 @@ impl ThreadPool{
     {
         let job = Box::new(f);
 
-        self.dispatcher.send(job).unwrap();
+        self.dispatcher.as_ref().unwrap().send(job).unwrap();
     }
 }
 
 impl Drop for ThreadPool{
     fn drop(&mut self) {
+        drop(self.dispatcher.take());
+
         for worker in self.workers.drain(..) {
             println!("Shutting down worker {}", worker.id);
 
