@@ -45,3 +45,11 @@ impl Worker {
         Worker { id, thread, receiver }
     }
 }
+
+struct Job;
+
+impl Job{
+    fn new() -> Job {
+        Job
+    }
+}
