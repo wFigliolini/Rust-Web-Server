@@ -3,6 +3,8 @@ use std::{
     thread,
 };
 
+type Job = Box<dyn FnOnce() + Send + 'static>;
+
 pub struct ThreadPool{
     workers: Vec<Worker>,
     dispatcher: mpsc::Sender<Job>,
@@ -34,7 +36,9 @@ impl ThreadPool{
     where
         F: FnOnce() + Send + 'static,
     {
-        unimplemented!()
+        let job = Box::new(f);
+        
+        self.dispatcher.send(job).unwrap();
     }
 }
 
