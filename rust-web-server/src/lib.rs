@@ -133,6 +133,6 @@ mod tests {
         let request = "GET /does_not_exist HTTP/1.1".to_string();
         let (status_line, filename) = parse_http_request(&request);
         assert_eq!(status_line, "HTTP/1.1 404 NOT FOUND");
-        assert_eq!(status_line, "404.html");
+        assert_eq!(filename, "404.html");
     }
 }
