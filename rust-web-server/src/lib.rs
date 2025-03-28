@@ -18,14 +18,7 @@ pub fn handle_connection(mut stream: TcpStream) {
 
     let request_line = &http_request[0];
 
-    let (status_line, filename) = match request_line.split_whitespace().collect::<Vec<&str>>().as_slice() {
-        ["GET", "/", _] => ("HTTP/1.1 200 OK", "hello.html"),
-        ["GET", "/sleep", _] => {
-            thread::sleep(Duration::from_secs(5));
-            ("HTTP/1.1 200 OK", "hello.html")
-        },
-        _ => ("HTTP/1.1 404 NOT FOUND", "404.html"),
-    };
+    let (status_line, filename) = parse_http_request(request_line);
     let contents = fs::read_to_string(filename).unwrap();
     let length = contents.len();
     let response = format!(
@@ -34,6 +27,17 @@ pub fn handle_connection(mut stream: TcpStream) {
     );
 
     stream.write(response.as_bytes()).unwrap();
+}
+
+fn parse_http_request(request: &String) -> (&str, &str) {
+    match request.split_whitespace().collect::<Vec<&str>>().as_slice() {
+        ["GET", "/", _] => ("HTTP/1.1 200 OK", "hello.html"),
+        ["GET", "/sleep", _] => {
+            thread::sleep(Duration::from_secs(5));
+            ("HTTP/1.1 200 OK", "hello.html")
+        },
+        _ => ("HTTP/1.1 404 NOT FOUND", "404.html"),
+    }
 }
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
@@ -95,7 +99,7 @@ struct Worker {
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
         let thread = thread::spawn(move || loop {
-            let message = receiver.lock().unwrap().recv();
+            let message = receiver.lock().expect("Worker attempted to acquire Mutex from Panicked thread, shutting down.").recv();
 
             match message {
                 Ok(job) => {
