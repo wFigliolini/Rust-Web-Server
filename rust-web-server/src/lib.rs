@@ -4,7 +4,6 @@ use std::{
     net::TcpStream,
     sync::{mpsc, Arc, Mutex},
     thread,
-    time::Duration,
 };
 
 pub fn handle_connection(mut stream: TcpStream) {
@@ -32,10 +31,6 @@ pub fn handle_connection(mut stream: TcpStream) {
 fn parse_http_request(request: &String) -> (&str, &str) {
     match request.split_whitespace().collect::<Vec<&str>>().as_slice() {
         ["GET", "/", _] => ("HTTP/1.1 200 OK", "hello.html"),
-        ["GET", "/sleep", _] => {
-            thread::sleep(Duration::from_secs(5));
-            ("HTTP/1.1 200 OK", "hello.html")
-        },
         _ => ("HTTP/1.1 404 NOT FOUND", "404.html"),
     }
 }
