@@ -84,3 +84,43 @@ impl Worker {
         Worker { id, thread }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_threadpool_new_panics_with_zero_size() {
+        assert!(std::panic::catch_unwind(|| {
+            ThreadPool::new(0);
+        })
+        .is_err())
+    }
+
+    #[test]
+    fn test_worker_new_and_execute() {
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+        let worker = Worker::new(0, Arc::clone(&receiver));
+        sender.send(Box::new(|| {})).unwrap();
+        drop(sender);
+        worker.thread.join().unwrap();
+    }
+
+    #[test]
+    fn test_threadpool_new() {
+        let _pool = ThreadPool::new(4);
+    }
+
+    #[test]
+    fn test_threadpool_execute() {
+        let pool = ThreadPool::new(4);
+        pool.execute(|| {});
+    }
+
+    #[test]
+    fn test_threadpool_drop() {
+        let pool = ThreadPool::new(4);
+        drop(pool);
+    }
+}
