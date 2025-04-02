@@ -17,12 +17,8 @@ pub fn handle_connection(mut stream: TcpStream) {
     let request_line = &http_request[0];
 
     let (status_line, filename) = parse_http_request(request_line);
-    let contents = fs::read_to_string(filename).unwrap();
-    let length = contents.len();
-    let response = format!(
-        "{}\r\nContent-Length: {}\r\n\r\n{}",
-        status_line, length, contents
-    );
+
+    let response = generate_http_response(status_line, filename);
 
     stream.write(response.as_bytes()).unwrap();
 }
@@ -32,6 +28,15 @@ fn parse_http_request(request: &String) -> (&str, &str) {
         ["GET", "/", _] => ("HTTP/1.1 200 OK", "hello.html"),
         _ => ("HTTP/1.1 404 NOT FOUND", "404.html"),
     }
+}
+
+fn generate_http_response(status_line: &str, filename: &str) -> String {
+    let contents = fs::read_to_string(filename).unwrap();
+    let length = contents.len();
+    format!(
+        "{}\r\nContent-Length: {}\r\n\r\n{}",
+        status_line, length, contents
+    )
 }
 
 #[cfg(test)]
@@ -52,5 +57,13 @@ mod tests {
         let (status_line, filename) = parse_http_request(&request);
         assert_eq!(status_line, "HTTP/1.1 404 NOT FOUND");
         assert_eq!(filename, "404.html");
+    }
+
+    #[test]
+    fn test_generate_http_response_404() {
+        let status_line = "HTTP/1.1 404 NOT FOUND";
+        let filename = "404.html";
+        let response = generate_http_response(status_line, filename);
+        assert!(response.contains(status_line));
     }
 }
